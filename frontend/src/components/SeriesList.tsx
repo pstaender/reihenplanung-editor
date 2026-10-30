@@ -4,6 +4,7 @@ import { STATES } from '../holidays'
 import { href, navigate } from '../router'
 import { createSeries, deleteSeries, duplicateSeries, useStore } from '../store'
 import { IconCopy, IconDelete, IconPlus } from '../icons'
+import { BackupButtons } from './BackupButtons'
 import { SeriesForm } from './SeriesForm'
 import type { Series } from '../types'
 
@@ -26,9 +27,12 @@ export function SeriesList() {
     <section className="series-list">
       <header className="page-header">
         <h1>Unterrichtsreihen</h1>
-        <button className="primary" onClick={() => setCreating(true)}>
-          <IconPlus /> Neue Reihe
-        </button>
+        <div className="toolbar">
+          <BackupButtons />
+          <button className="primary" onClick={() => setCreating(true)}>
+            <IconPlus /> Neue Reihe
+          </button>
+        </div>
       </header>
 
       {list.length === 0 ? (

@@ -7,8 +7,12 @@ Daten bleiben lokal im Browser (IndexedDB) und können optional mit einem eigene
 ## Schnellstart
 
 ```sh
-cd frontend && npm install && npm run dev
+./dev.sh   # startet API (http://localhost:8080) und Frontend (http://localhost:5173), beenden mit Strg+C
 ```
+
+Oder nur das Frontend: `cd frontend && npm install && npm run dev`.
+
+Alle Reihen lassen sich in der Übersicht (und auf der Sync-Seite) als JSON-Datei exportieren und wieder importieren.
 
 ## Sync-Server (optional)
 

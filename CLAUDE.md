@@ -15,7 +15,8 @@ optional Sync auf einen minimalen PHP-Server. Sprache der UI und Kommentare: **D
   - `src/holidays.ts` – Ferien/Feiertage von mehr-schulferien.de (pro Bundesland+Jahr in IndexedDB gecacht, 14 Tage)
   - `src/markdown.ts` – `marked` + `DOMPurify`
   - `src/icons.ts` – Keyline-Icons via `unplugin-icons` (`~icons/keyline-icons/<name>`), neue Icons hier ergänzen
-  - `src/components/` – UI; `SeriesView.tsx` ist die Planungstabelle
+  - `src/components/` – UI; `SeriesView.tsx` ist die Planungstabelle, `BackupButtons.tsx` JSON-Export/-Import
+    (in der Übersicht und auf der Sync-Seite; Import überschreibt Reihen mit gleicher ID)
   - `src/styles.css` – ergänzt minimaxcss (per CDN in `index.html`), modernes CSS (Nesting, `light-dark()`, `color-mix()`, `field-sizing`)
 - `api/` – PHP ≥ 8.2, ohne Abhängigkeiten (Composer nur für Autoload)
   - `public/index.php` – Einstieg; `src/Http/Api.php` – Routing
@@ -43,6 +44,8 @@ Löschen = Tombstone (`deleted: true`). Weitere Endpunkte: `GET /me`, `GET /seri
 ## Befehle
 
 ```sh
+./dev.sh             # API (localhost:8080) + Frontend (localhost:5173) zusammen starten; API_PORT/FRONTEND_PORT überschreibbar
+
 # Frontend
 cd frontend && npm install
 npm run dev          # Dev-Server

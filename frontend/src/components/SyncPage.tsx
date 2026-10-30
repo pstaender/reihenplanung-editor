@@ -1,7 +1,9 @@
 import { useState, type FormEvent } from 'react'
-import { getState, importSeries, markAllDirty, saveSettings, useStore } from '../store'
+import { markAllDirty, saveSettings, useStore } from '../store'
 import { syncNow, testConnection } from '../sync'
-import { IconDownload, IconSync, IconUpload } from '../icons'
+import { href } from '../router'
+import { IconBack, IconSync } from '../icons'
+import { BackupButtons } from './BackupButtons'
 
 const dateTime = new Intl.DateTimeFormat('de-DE', { dateStyle: 'medium', timeStyle: 'short' })
 
@@ -35,7 +37,14 @@ export function SyncPage() {
 
   return (
     <section className="sync-page">
-      <h1>Synchronisation</h1>
+      <header className="page-header">
+        <div>
+          <a href={href.list()} className="back">
+            <IconBack /> Alle Reihen
+          </a>
+          <h1>Synchronisation</h1>
+        </div>
+      </header>
       <p className="muted">
         Alle Daten werden lokal im Browser gespeichert. Optional können sie mit einem eigenen Server abgeglichen werden
         (siehe <code>api/</code>). Benutzer und Tokens werden dort per CLI angelegt.
@@ -71,36 +80,8 @@ export function SyncPage() {
       <h2>Datensicherung</h2>
       <p className="muted">Alle Reihen als JSON-Datei exportieren bzw. wieder importieren.</p>
       <div className="toolbar">
-        <button onClick={exportJson}>
-          <IconDownload /> Exportieren
-        </button>
-        <label className="button">
-          <IconUpload /> Importieren
-          <input type="file" accept="application/json,.json" hidden onChange={(e) => e.target.files?.[0] && void importJson(e.target.files[0])} />
-        </label>
+        <BackupButtons />
       </div>
     </section>
   )
-}
-
-function exportJson() {
-  const series = [...getState().series.values()].filter((s) => !s.deleted).map(({ _dirty, _rev, ...rest }) => rest)
-  const blob = new Blob([JSON.stringify({ version: 1, exportedAt: new Date().toISOString(), series }, null, 2)], { type: 'application/json' })
-  const a = document.createElement('a')
-  a.href = URL.createObjectURL(blob)
-  a.download = `reihenplanung-${new Date().toISOString().slice(0, 10)}.json`
-  a.click()
-  URL.revokeObjectURL(a.href)
-}
-
-async function importJson(file: File) {
-  try {
-    const data = JSON.parse(await file.text())
-    const list = Array.isArray(data) ? data : data.series
-    if (!Array.isArray(list)) throw new Error('Unbekanntes Format')
-    importSeries(list)
-    alert(`${list.length} Reihe(n) importiert.`)
-  } catch (error) {
-    alert(`Import fehlgeschlagen: ${error instanceof Error ? error.message : error}`)
-  }
 }
