@@ -8,6 +8,7 @@ Die Datei lässt sich von Hand, mit einem Skript oder mit einer KI erstellen. F�
 
 ```json
 {
+  "app": "pstaender/reihenplanung",
   "version": 1,
   "series": [ { "…": "eine Reihe" }, { "…": "noch eine Reihe" } ]
 }
@@ -15,7 +16,8 @@ Die Datei lässt sich von Hand, mit einem Skript oder mit einer KI erstellen. F�
 
 | Feld | Typ | Pflicht | Bedeutung |
 | --- | --- | --- | --- |
-| `version` | Zahl | nein | Immer `1` |
+| `app` | Text | ja | Immer `"pstaender/reihenplanung"`. Kennzeichnet die Datei als Reihenplanung. |
+| `version` | Zahl | ja | Version des Formats, derzeit immer `1` |
 | `series` | Liste | ja | Die Unterrichtsreihen, siehe unten |
 
 ## Eine Reihe
@@ -89,10 +91,11 @@ Erlaubt ist einfaches Markdown. Ein Zeilenumbruch im Text wird als `\n` geschrie
 ## Checkliste
 
 1. Die Datei ist gültiges JSON: doppelte Anführungszeichen, keine Kommentare, kein Komma nach dem letzten Element.
-2. Jede Reihe hat `name`, `startDate`, `unit` und `rows`.
-3. Alle Daten haben das Format `JJJJ-MM-TT`, z. B. `2026-09-28`.
-4. Die Schlüssel in `cells` entsprechen genau den Namen in `columns`.
-5. Die Zeilen stehen in zeitlicher Reihenfolge, Ferien bekommen keine eigenen Zeilen.
+2. Ganz oben stehen `"app": "pstaender/reihenplanung"` und `"version": 1`.
+3. Jede Reihe hat `name`, `startDate`, `unit` und `rows`.
+4. Alle Daten haben das Format `JJJJ-MM-TT`, z. B. `2026-09-28`.
+5. Die Schlüssel in `cells` entsprechen genau den Namen in `columns`.
+6. Die Zeilen stehen in zeitlicher Reihenfolge, Ferien bekommen keine eigenen Zeilen.
 
 ## Beispiel
 
@@ -100,6 +103,7 @@ Eine Reihe über drei Kalenderwochen mit Ferien aus Nordrhein-Westfalen:
 
 ```json
 {
+  "app": "pstaender/reihenplanung",
   "version": 1,
   "series": [
     {

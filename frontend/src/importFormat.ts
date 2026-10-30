@@ -8,6 +8,10 @@ import { uuid } from './uuid'
  * Im Dateiformat werden Spalten über ihren Namen angesprochen, intern über IDs.
  */
 
+/** Kennung und Version des Dateiformats – zusammen ein Zuordnungshinweis für die Datei. */
+export const FILE_APP = 'pstaender/reihenplanung'
+export const FILE_VERSION = 1
+
 const UNITS: Unit[] = ['week', 'day', 'lesson']
 const DATE = /^\d{4}-\d{2}-\d{2}$/
 const COLOR = /^#[0-9a-f]{6}$/i
@@ -17,7 +21,8 @@ type FileRow = { label?: string; date?: string; bg?: string; fg?: string; cells:
 
 export function exportFile(series: Series[]) {
   return {
-    version: 1,
+    app: FILE_APP,
+    version: FILE_VERSION,
     series: series.map((s) => {
       const cells = (c: Record<string, string>): FileCells =>
         Object.fromEntries(s.columns.flatMap((col) => (c[col.id] ? [[col.title, c[col.id]]] : [])))
@@ -47,7 +52,10 @@ export function exportFile(series: Series[]) {
 
 /** Prüft eine Importdatei und wandelt sie in Reihen um. Wirft bei Fehlern eine verständliche Meldung. */
 export function parseImport(data: unknown): Series[] {
-  if (!isObject(data) || !Array.isArray(data.series)) throw new Error('Erwartet wird ein Objekt mit dem Feld "series" (Liste von Reihen).')
+  if (!isObject(data)) throw new Error('Erwartet wird ein JSON-Objekt.')
+  if (data.app !== FILE_APP) throw new Error(`Keine Reihenplanungs-Datei: "app" muss "${FILE_APP}" sein.`)
+  if (data.version !== FILE_VERSION) throw new Error(`Nicht unterstützte Formatversion ${JSON.stringify(data.version)} (erwartet: ${FILE_VERSION}).`)
+  if (!Array.isArray(data.series)) throw new Error('"series" muss eine Liste von Reihen sein.')
   return data.series.map((raw, index) => {
     const label = isObject(raw) && typeof raw.name === 'string' ? `„${raw.name}“` : `Reihe ${index + 1}`
     try {
