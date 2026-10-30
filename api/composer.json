@@ -1,0 +1,23 @@
+{
+    "name": "reihenplanung/api",
+    "description": "Minimaler Sync-Server für die Reihenplanung",
+    "type": "project",
+    "license": "MIT",
+    "require": {
+        "php": ">=8.2",
+        "ext-json": "*"
+    },
+    "autoload": {
+        "psr-4": {
+            "Reihenplanung\\": "src/"
+        }
+    },
+    "bin": ["bin/console"],
+    "scripts": {
+        "serve": "php -S localhost:8080 -t public public/index.php",
+        "lint": "find src public bin -name '*.php' -o -name console | xargs -n1 php -l"
+    },
+    "config": {
+        "sort-packages": true
+    }
+}

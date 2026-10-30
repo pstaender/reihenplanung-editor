@@ -1,0 +1,106 @@
+import { useState, type FormEvent } from 'react'
+import { getState, importSeries, markAllDirty, saveSettings, useStore } from '../store'
+import { syncNow, testConnection } from '../sync'
+import { IconDownload, IconSync, IconUpload } from '../icons'
+
+const dateTime = new Intl.DateTimeFormat('de-DE', { dateStyle: 'medium', timeStyle: 'short' })
+
+export function SyncPage() {
+  const settings = useStore((s) => s.settings)
+  const sync = useStore((s) => s.sync)
+  const [serverUrl, setServerUrl] = useState(settings.serverUrl)
+  const [token, setToken] = useState(settings.token)
+  const [message, setMessage] = useState<{ ok: boolean; text: string } | null>(null)
+
+  const save = async (e: FormEvent) => {
+    e.preventDefault()
+    setMessage(null)
+    if (!serverUrl || !token) {
+      saveSettings({ serverUrl: '', token: '' })
+      setMessage({ ok: true, text: 'Synchronisation deaktiviert – Daten bleiben nur in diesem Browser.' })
+      return
+    }
+    try {
+      const email = await testConnection(serverUrl, token)
+      const changedServer = serverUrl !== settings.serverUrl || token !== settings.token
+      // Neuer Server/Account: alles einmal komplett abgleichen
+      saveSettings({ serverUrl, token, ...(changedServer ? { revision: 0 } : {}) })
+      if (changedServer) markAllDirty()
+      await syncNow()
+      setMessage({ ok: true, text: `Verbunden als ${email}.` })
+    } catch (error) {
+      setMessage({ ok: false, text: `Verbindung fehlgeschlagen: ${error instanceof Error ? error.message : error}` })
+    }
+  }
+
+  return (
+    <section className="sync-page">
+      <h1>Synchronisation</h1>
+      <p className="muted">
+        Alle Daten werden lokal im Browser gespeichert. Optional können sie mit einem eigenen Server abgeglichen werden
+        (siehe <code>api/</code>). Benutzer und Tokens werden dort per CLI angelegt.
+      </p>
+
+      <form onSubmit={save} className="stack">
+        <label>
+          Server-URL
+          <input type="url" value={serverUrl} onChange={(e) => setServerUrl(e.target.value.trim())} placeholder="https://example.org/reihenplanung-api" />
+        </label>
+        <label>
+          API-Token
+          <input type="password" value={token} onChange={(e) => setToken(e.target.value.trim())} placeholder="rp_…" autoComplete="off" />
+        </label>
+        <label className="checkbox">
+          <input type="checkbox" checked={settings.autoSync} onChange={(e) => saveSettings({ autoSync: e.target.checked })} />
+          Automatisch synchronisieren
+        </label>
+        <footer className="dialog-footer">
+          <button type="button" disabled={!settings.serverUrl || sync.state === 'syncing'} onClick={() => void syncNow()}>
+            <IconSync className={sync.state === 'syncing' ? 'spin' : undefined} /> Jetzt synchronisieren
+          </button>
+          <button type="submit" className="primary">
+            Speichern &amp; testen
+          </button>
+        </footer>
+      </form>
+
+      {message && <p className={`notice ${message.ok ? 'ok' : 'error'}`}>{message.text}</p>}
+      {sync.state === 'error' && <p className="notice error">Letzter Sync fehlgeschlagen: {sync.message}</p>}
+      {settings.lastSyncAt && <p className="muted">Zuletzt synchronisiert: {dateTime.format(settings.lastSyncAt)}</p>}
+
+      <h2>Datensicherung</h2>
+      <p className="muted">Alle Reihen als JSON-Datei exportieren bzw. wieder importieren.</p>
+      <div className="toolbar">
+        <button onClick={exportJson}>
+          <IconDownload /> Exportieren
+        </button>
+        <label className="button">
+          <IconUpload /> Importieren
+          <input type="file" accept="application/json,.json" hidden onChange={(e) => e.target.files?.[0] && void importJson(e.target.files[0])} />
+        </label>
+      </div>
+    </section>
+  )
+}
+
+function exportJson() {
+  const series = [...getState().series.values()].filter((s) => !s.deleted).map(({ _dirty, _rev, ...rest }) => rest)
+  const blob = new Blob([JSON.stringify({ version: 1, exportedAt: new Date().toISOString(), series }, null, 2)], { type: 'application/json' })
+  const a = document.createElement('a')
+  a.href = URL.createObjectURL(blob)
+  a.download = `reihenplanung-${new Date().toISOString().slice(0, 10)}.json`
+  a.click()
+  URL.revokeObjectURL(a.href)
+}
+
+async function importJson(file: File) {
+  try {
+    const data = JSON.parse(await file.text())
+    const list = Array.isArray(data) ? data : data.series
+    if (!Array.isArray(list)) throw new Error('Unbekanntes Format')
+    importSeries(list)
+    alert(`${list.length} Reihe(n) importiert.`)
+  } catch (error) {
+    alert(`Import fehlgeschlagen: ${error instanceof Error ? error.message : error}`)
+  }
+}

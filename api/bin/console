@@ -1,0 +1,11 @@
+#!/usr/bin/env php
+<?php
+
+declare(strict_types=1);
+
+use Reihenplanung\Cli\Console;
+use Reihenplanung\Config;
+
+require dirname(__DIR__) . '/vendor/autoload.php';
+
+exit((new Console(Config::fromEnvironment()))->run($argv));
