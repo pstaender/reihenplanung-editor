@@ -16,7 +16,11 @@ optional Sync auf einen minimalen PHP-Server. Sprache der UI und Kommentare: **D
   - `src/markdown.ts` – `marked` + `DOMPurify`
   - `src/icons.ts` – Keyline-Icons via `unplugin-icons` (`~icons/keyline-icons/<name>`), neue Icons hier ergänzen
   - `src/components/` – UI; `SeriesView.tsx` ist die Planungstabelle, `BackupButtons.tsx` JSON-Export/-Import
-    (in der Übersicht und auf der Sync-Seite; Import überschreibt Reihen mit gleicher ID)
+    (in der Übersicht und auf der Sync-Seite), `HelpPage.tsx` rendert die Doku aus `src/docs/`
+  - `src/docs/*.md` – Hilfetexte (Kurzanleitung, Formatspezifikation), per `?raw` importiert und mit `renderMarkdown` angezeigt.
+    `format.md` ist die verbindliche Spezifikation des Import-/Exportformats und Teil des KI-Prompts – verständlich für Mensch und KI halten.
+  - `src/importFormat.ts` – `exportFile`/`parseImport` gemäß `docs/format.md`. Im Dateiformat werden Spalten über ihren
+    (eindeutigen) Namen adressiert, intern über IDs. Bei Formatänderungen Spezifikation, Beispiel und Code gemeinsam anpassen.
   - `src/styles.css` – ergänzt minimaxcss (per CDN in `index.html`), modernes CSS (Nesting, `light-dark()`, `color-mix()`, `field-sizing`)
 - `api/` – PHP ≥ 8.2, ohne Abhängigkeiten (Composer nur für Autoload)
   - `public/index.php` – Einstieg; `src/Http/Api.php` – Routing
@@ -68,7 +72,9 @@ Umgebungsvariablen der API: `REIHENPLANUNG_DATA_DIR` (Standard `api/data`), `REI
 
 ## Konventionen
 
+- Die Software ist noch nicht produktiv: keine Rückwärtskompatibilitäts-Workarounds für alte Datenstände bauen.
 - Keine zusätzlichen UI-Frameworks; Stil nüchtern, wenig Farbe, Icons nur aus `keyline-icons`.
 - Druck: Tabelle im Querformat (`body.landscape` + `@page landscape-page`); UI-Elemente mit `dont-print` ausblenden.
 - Datumswerte immer als `YYYY-MM-DD`-Strings (Helfer in `src/dates.ts`), keine UTC-Konvertierung.
 - PHP: `declare(strict_types=1)`, `final`/`readonly` Klassen, IDs vor Dateizugriff als UUID validieren.
+  Reihen-JSON als Objekte dekodieren (`json_decode(..., false)`), sonst werden leere Objekte `{}` zu `[]`.

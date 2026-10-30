@@ -1,7 +1,8 @@
+import { exportFile, parseImport } from '../importFormat'
 import { getState, importSeries } from '../store'
 import { IconDownload, IconUpload } from '../icons'
 
-/** Export/Import aller Reihen als JSON-Datei. Beim Import werden Reihen mit gleicher ID überschrieben. */
+/** Export/Import aller Reihen als JSON-Datei (Format: docs/format.md). Gleiche IDs werden beim Import überschrieben. */
 export function BackupButtons() {
   return (
     <>
@@ -26,23 +27,24 @@ export function BackupButtons() {
 }
 
 function exportJson() {
-  const series = [...getState().series.values()].filter((s) => !s.deleted).map(({ _dirty, _rev, ...rest }) => rest)
-  const blob = new Blob([JSON.stringify({ version: 1, exportedAt: new Date().toISOString(), series }, null, 2)], { type: 'application/json' })
-  const a = document.createElement('a')
-  a.href = URL.createObjectURL(blob)
-  a.download = `reihenplanung-${new Date().toISOString().slice(0, 10)}.json`
-  a.click()
-  URL.revokeObjectURL(a.href)
+  const series = [...getState().series.values()].filter((s) => !s.deleted)
+  downloadJson(JSON.stringify(exportFile(series), null, 2), `reihenplanung-${new Date().toISOString().slice(0, 10)}.json`)
 }
 
 async function importJson(file: File) {
   try {
-    const data = JSON.parse(await file.text())
-    const list = Array.isArray(data) ? data : data.series
-    if (!Array.isArray(list)) throw new Error('Unbekanntes Format')
-    importSeries(list)
-    alert(`${list.length} Reihe(n) importiert.`)
+    const series = parseImport(JSON.parse(await file.text()))
+    importSeries(series)
+    alert(`${series.length} Reihe(n) importiert.`)
   } catch (error) {
     alert(`Import fehlgeschlagen: ${error instanceof Error ? error.message : error}`)
   }
+}
+
+export function downloadJson(content: string, filename: string) {
+  const a = document.createElement('a')
+  a.href = URL.createObjectURL(new Blob([content], { type: 'application/json' }))
+  a.download = filename
+  a.click()
+  URL.revokeObjectURL(a.href)
 }

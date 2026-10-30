@@ -1,5 +1,6 @@
 import { href, useRoute } from '../router'
-import { IconBook } from '../icons'
+import { IconBook, IconHelp } from '../icons'
+import { HelpPage } from './HelpPage'
 import { SeriesList } from './SeriesList'
 import { SeriesView } from './SeriesView'
 import { SyncIndicator } from './SyncIndicator'
@@ -14,12 +15,18 @@ export function App() {
         <a href={href.list()} className="brand">
           <IconBook /> Reihenplanung
         </a>
-        <SyncIndicator />
+        <nav>
+          <a href={href.help()} className={route.page === 'help' ? 'active' : undefined}>
+            <IconHelp /> <span>Hilfe</span>
+          </a>
+          <SyncIndicator />
+        </nav>
       </header>
       <main className={route.page === 'series' ? 'wide' : undefined}>
         {route.page === 'list' && <SeriesList />}
         {route.page === 'series' && <SeriesView key={route.id} id={route.id} />}
         {route.page === 'sync' && <SyncPage />}
+        {route.page === 'help' && <HelpPage topic={route.topic} />}
       </main>
     </>
   )

@@ -28,7 +28,7 @@ export function ColumnsDialog({ columns, onSave, onClose }: Props) {
         className="stack"
         onSubmit={(e) => {
           e.preventDefault()
-          onSave(draft.map((c) => ({ ...c, title: c.title.trim() || 'Ohne Titel' })))
+          onSave(uniqueTitles(draft))
         }}
       >
         <ol className="column-list">
@@ -69,4 +69,16 @@ export function ColumnsDialog({ columns, onSave, onClose }: Props) {
       </form>
     </Dialog>
   )
+}
+
+/** Spaltennamen müssen eindeutig sein (Import/Export adressiert Zellen über den Namen). */
+function uniqueTitles(columns: Column[]): Column[] {
+  const seen = new Set<string>()
+  return columns.map((column) => {
+    const base = column.title.trim() || 'Ohne Titel'
+    let title = base
+    for (let n = 2; seen.has(title); n++) title = `${base} ${n}`
+    seen.add(title)
+    return { ...column, title }
+  })
 }

@@ -11,7 +11,8 @@ use RuntimeException;
  */
 final class JsonStore
 {
-    public static function read(string $file, mixed $default = null): mixed
+    /** Mit $associative = false bleiben JSON-Objekte stdClass – leere Objekte `{}` werden so nicht zu `[]`. */
+    public static function read(string $file, mixed $default = null, bool $associative = true): mixed
     {
         if (!is_file($file)) {
             return $default;
@@ -21,7 +22,7 @@ final class JsonStore
             throw new RuntimeException("Datei kann nicht gelesen werden: {$file}");
         }
 
-        return json_decode($content, true, flags: JSON_THROW_ON_ERROR);
+        return json_decode($content, $associative, flags: JSON_THROW_ON_ERROR);
     }
 
     public static function write(string $file, mixed $data): void

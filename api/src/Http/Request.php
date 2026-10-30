@@ -57,15 +57,17 @@ final readonly class Request
         return null;
     }
 
-    /** @return array<string, mixed> */
-    public function json(): array
+    /**
+     * Dekodiert den Body als Objekt (stdClass), damit leere JSON-Objekte erhalten bleiben.
+     */
+    public function json(): object
     {
         try {
-            $data = json_decode($this->body, true, flags: JSON_THROW_ON_ERROR);
+            $data = json_decode($this->body, false, flags: JSON_THROW_ON_ERROR);
         } catch (JsonException) {
             throw new HttpException(400, 'Ungültiges JSON');
         }
-        if (!is_array($data)) {
+        if (!is_object($data)) {
             throw new HttpException(400, 'JSON-Objekt erwartet');
         }
 

@@ -49,7 +49,9 @@ h2 {
 /* ── Buttons & Icons ───────────────────────────────────────────────────────── */
 
 button,
-.button {
+.button,
+button.primary,
+.button.primary {
   display: inline-flex;
   align-items: center;
   gap: 0.4em;
@@ -401,14 +403,26 @@ dialog {
   }
 
   &.none {
-    background: linear-gradient(135deg, transparent 46%, var(--color-red) 46% 54%, transparent 54%);
+    background: linear-gradient(
+      135deg,
+      transparent 46%,
+      var(--color-red) 46% 54%,
+      transparent 54%
+    );
   }
 
   &.custom {
     display: grid;
     place-items: center;
     overflow: hidden;
-    background: conic-gradient(#f87171, #fbbf24, #4ade80, #60a5fa, #c084fc, #f87171);
+    background: conic-gradient(
+      #f87171,
+      #fbbf24,
+      #4ade80,
+      #60a5fa,
+      #c084fc,
+      #f87171
+    );
 
     input {
       opacity: 0;
@@ -430,7 +444,7 @@ table.plan {
   min-width: 60rem;
   margin: 0;
   border: 1px solid var(--line-color);
-  --border-size: 1px;
+  --border-size: 2px;
   font-size: 0.925rem;
 
   .col-slot {
@@ -447,12 +461,7 @@ table.plan {
     font-size: 0.8rem;
     text-transform: uppercase;
     letter-spacing: 0.04em;
-    color: var(--muted-color);
     outline: none;
-  }
-
-  thead {
-    background: none;
   }
 
   td,
@@ -467,7 +476,11 @@ table.plan {
   }
 
   tbody tr.holiday {
-    background: repeating-linear-gradient(-45deg, var(--holiday-bg) 0 8px, var(--holiday-stripe) 8px 16px);
+    background: repeating-linear-gradient(
+      -45deg,
+      var(--holiday-bg) 0 8px,
+      var(--holiday-stripe) 8px 16px
+    );
     color: var(--muted-color);
   }
 
@@ -663,7 +676,7 @@ table.plan {
   table.plan {
     min-width: 0;
     font-size: 9pt;
-    --border-size: 0.5pt;
+    --border-size: 1pt;
     --line-color: #888;
 
     thead {
@@ -697,5 +710,134 @@ table.plan {
   .cell-view {
     margin: 0;
     padding: 0;
+  }
+}
+
+/* ── Hilfe ─────────────────────────────────────────────────────────────────── */
+
+.app-header nav {
+  display: flex;
+  align-items: center;
+  gap: calc(1.25 * var(--space));
+
+  > a:not(.sync-indicator) {
+    font-size: 0.85rem;
+    font-weight: 400;
+    color: var(--muted-color);
+
+    &:hover,
+    &.active {
+      color: var(--text-color);
+    }
+
+    @media (width < 32rem) {
+      span {
+        display: none;
+      }
+    }
+  }
+}
+
+.tabs {
+  display: flex;
+  gap: calc(1.5 * var(--space));
+  border-bottom: 1px solid var(--line-color);
+  margin-bottom: calc(1.5 * var(--space));
+
+  a {
+    padding-bottom: var(--space-small);
+    margin-bottom: -1px;
+    border-bottom: 2px solid transparent;
+    color: var(--muted-color);
+    font-weight: 500;
+    text-decoration: none;
+
+    &.active {
+      color: var(--text-color);
+      border-bottom-color: var(--accent-color);
+    }
+  }
+}
+
+.prose {
+  --paragraph-text-alignment: left;
+  --paragraph-hyphens: manual;
+
+  p {
+    text-align: left;
+    hyphens: manual;
+  }
+
+  > h1 {
+    display: none; /* Seitentitel kommt aus der Navigation */
+  }
+
+  h2 {
+    margin: calc(1.75 * var(--space)) 0 var(--space-small);
+  }
+
+  p,
+  ul,
+  ol,
+  pre,
+  table {
+    margin: 0 0 var(--space);
+  }
+
+  ul,
+  ol {
+    padding-left: 1.4em;
+  }
+
+  pre {
+    font-size: 0.8rem;
+    overflow-x: auto;
+  }
+
+  table {
+    font-size: 0.875rem;
+    border: 1px solid var(--line-color);
+    --border-size: 1px;
+
+    thead {
+      background: none;
+
+      th {
+        text-align: left;
+        outline: none;
+      }
+    }
+
+    td,
+    th {
+      vertical-align: top;
+      border-color: var(--line-color);
+    }
+
+    tbody tr:nth-child(2n) {
+      background: none;
+    }
+
+    td:first-child code {
+      white-space: nowrap;
+    }
+  }
+}
+
+.ai-box {
+  display: grid;
+  gap: var(--space-small);
+  padding: var(--space);
+  margin-bottom: calc(1.5 * var(--space));
+  border: 1px solid var(--line-color);
+  border-radius: var(--radius);
+
+  p {
+    margin: 0;
+
+    svg {
+      display: inline;
+      vertical-align: -0.15em;
+    }
   }
 }

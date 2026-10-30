@@ -7,6 +7,9 @@ namespace Reihenplanung;
 use InvalidArgumentException;
 
 /**
+ * Reihen werden als stdClass-Objekte behandelt (nicht als assoziative Arrays), damit
+ * leere JSON-Objekte wie `"cells": {}` beim Speichern nicht zu `[]` werden.
+ *
  * Jede Unterrichtsreihe liegt als eigene Datei unter data/series/<user-id>/<series-uuid>.json.
  *
  * Jede gespeicherte Reihe erhält eine serverseitige, monoton steigende Revision (`_rev`).
@@ -21,14 +24,14 @@ final class SeriesRepository
     /**
      * Last-write-wins anhand von `updatedAt` (vom Client gesetzter Zeitstempel in ms).
      *
-     * @param list<array<string, mixed>> $incoming
-     * @return array{revision: int, series: list<array<string, mixed>>}
+     * @param list<object> $incoming
+     * @return array{revision: int, series: list<object>}
      */
     public function sync(User $user, int $since, array $incoming): array
     {
         $dir = $this->userDir($user);
         foreach ($incoming as $series) {
-            self::validId($series['id'] ?? null);
+            self::validId($series->id ?? null);
         }
 
         return JsonStore::locked($dir . '/_meta.json', function () use ($dir, $since, $incoming): array {
@@ -36,14 +39,14 @@ final class SeriesRepository
             $revision = (int) $meta['revision'];
 
             foreach ($incoming as $series) {
-                $id = self::validId($series['id'] ?? null);
+                $id = self::validId($series->id ?? null);
                 $file = "{$dir}/{$id}.json";
-                $existing = JsonStore::read($file);
-                if ($existing !== null && ($existing['updatedAt'] ?? 0) > ($series['updatedAt'] ?? 0)) {
+                $existing = JsonStore::read($file, associative: false);
+                if ($existing !== null && ($existing->updatedAt ?? 0) > ($series->updatedAt ?? 0)) {
                     continue; // Server hat die neuere Version
                 }
                 $revision = max($revision + 1, (int) floor(microtime(true) * 1000));
-                $series['_rev'] = $revision;
+                $series->_rev = $revision;
                 JsonStore::write($file, $series);
             }
 
@@ -53,33 +56,32 @@ final class SeriesRepository
 
             $changed = array_values(array_filter(
                 $this->all($dir),
-                fn (array $s) => ($s['_rev'] ?? 0) > $since,
+                fn (object $s) => ($s->_rev ?? 0) > $since,
             ));
 
             return ['revision' => $revision, 'series' => $changed];
         });
     }
 
-    /** @return list<array<string, mixed>> */
+    /** @return list<object> */
     public function list(User $user): array
     {
         return $this->all($this->userDir($user));
     }
 
-    /** @return array<string, mixed>|null */
-    public function find(User $user, string $id): ?array
+    public function find(User $user, string $id): ?object
     {
-        return JsonStore::read($this->userDir($user) . '/' . self::validId($id) . '.json');
+        return JsonStore::read($this->userDir($user) . '/' . self::validId($id) . '.json', associative: false);
     }
 
-    /** @return list<array<string, mixed>> */
+    /** @return list<object> */
     private function all(string $dir): array
     {
         $files = glob($dir . '/*.json') ?: [];
         $series = [];
         foreach ($files as $file) {
             if (basename($file) !== '_meta.json') {
-                $series[] = JsonStore::read($file);
+                $series[] = JsonStore::read($file, associative: false);
             }
         }
 

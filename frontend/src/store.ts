@@ -41,29 +41,11 @@ export function onLocalChange(listener: () => void) {
   return () => changeListeners.delete(listener)
 }
 
-/** Ergänzt fehlende Felder (z. B. bei Importen oder älteren/fremden Datensätzen). */
-function normalize<T extends Partial<Series> & { id: string }>(series: T): T & Series {
-  return {
-    ...series,
-    name: series.name ?? '',
-    course: series.course ?? '',
-    startDate: series.startDate ?? today(),
-    unit: series.unit ?? 'week',
-    weekdays: Array.isArray(series.weekdays) ? series.weekdays : [],
-    state: series.state ?? '',
-    columns: Array.isArray(series.columns) ? series.columns : [],
-    rows: Array.isArray(series.rows) ? series.rows.map((r) => ({ ...r, label: r.label ?? '', cells: r.cells ?? {} })) : [],
-    holidays: series.holidays ?? {},
-    createdAt: series.createdAt ?? Date.now(),
-    updatedAt: series.updatedAt ?? 0,
-  }
-}
-
 export async function loadStore() {
   const [all, settings] = await Promise.all([db.allSeries(), db.getSettings()])
   setState({
     loaded: true,
-    series: new Map(all.map((s) => [s.id, normalize(s)])),
+    series: new Map(all.map((s) => [s.id, s])),
     settings: { ...DEFAULT_SETTINGS, ...settings },
   })
 }
@@ -154,7 +136,7 @@ export function applyRemote(remote: Series[]) {
       map.delete(series.id)
       void db.deleteSeries(series.id)
     } else {
-      const stored: StoredSeries = { ...normalize(series), _dirty: false }
+      const stored: StoredSeries = { ...series, _dirty: false }
       map.set(series.id, stored)
       void db.putSeries(stored)
     }
@@ -162,11 +144,9 @@ export function applyRemote(remote: Series[]) {
   setState({ series: map })
 }
 
+/** Übernimmt bereits geprüfte Reihen (siehe `parseImport`); gleiche IDs werden überschrieben. */
 export function importSeries(list: Series[]) {
-  for (const series of list) {
-    if (typeof series?.id !== 'string') continue
-    persist({ ...normalize(series), updatedAt: Date.now(), _dirty: true })
-  }
+  for (const series of list) persist({ ...series, updatedAt: Date.now(), _dirty: true })
 }
 
 /** Alle Reihen beim nächsten Sync (erneut) hochladen, ohne ihren Änderungszeitpunkt zu verändern. */

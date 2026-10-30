@@ -84,16 +84,16 @@ final class Api
             throw new HttpException(413, 'Anfrage zu groß');
         }
         $data = $request->json();
-        $incoming = $data['series'] ?? [];
-        if (!is_array($incoming) || !array_is_list($incoming)) {
+        $incoming = $data->series ?? [];
+        if (!is_array($incoming)) {
             throw new HttpException(400, '"series" muss eine Liste sein');
         }
         foreach ($incoming as $series) {
-            if (!is_array($series)) {
+            if (!is_object($series)) {
                 throw new HttpException(400, 'Jede Reihe muss ein Objekt sein');
             }
         }
 
-        return Response::json($this->series->sync($user, (int) ($data['since'] ?? 0), $incoming));
+        return Response::json($this->series->sync($user, (int) ($data->since ?? 0), $incoming));
     }
 }
