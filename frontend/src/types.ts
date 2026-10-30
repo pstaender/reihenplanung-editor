@@ -3,6 +3,10 @@ export type Unit = 'week' | 'day' | 'lesson'
 export interface Column {
   id: string
   title: string
+  /** In der Tabelle ausgeblendet (und damit auch nicht gedruckt) */
+  hidden?: boolean
+  /** Nur beim Drucken ausgeblendet */
+  hiddenInPrint?: boolean
 }
 
 /** Eine Unterrichtseinheit (Zeile der Tabelle). */

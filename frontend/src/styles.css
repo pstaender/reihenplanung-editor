@@ -152,6 +152,49 @@ button.primary,
     margin: 0.25rem 0 0;
   }
 
+  .meta-item {
+    all: unset;
+    cursor: pointer;
+    border-radius: 3px;
+    transition: opacity 0.15s;
+
+    & + &::before {
+      content: '·';
+      display: inline-block;
+      margin-inline: 0.45em;
+      opacity: 1;
+    }
+
+    &:hover {
+      text-decoration: underline;
+      text-decoration-color: color-mix(in srgb, currentColor 40%, transparent);
+    }
+
+    &:focus-visible {
+      outline: 2px solid var(--active-color);
+      outline-offset: 2px;
+    }
+
+    &.is-hidden {
+      opacity: 0.3;
+    }
+
+    @media print {
+      &.is-hidden {
+        display: none;
+      }
+
+      /* Trennpunkt nur zwischen sichtbaren Angaben */
+      & + &::before {
+        content: none;
+      }
+
+      &:not(.is-hidden) ~ &:not(.is-hidden)::before {
+        content: '·';
+      }
+    }
+  }
+
   .back {
     display: inline-flex;
     align-items: center;
@@ -369,16 +412,44 @@ dialog {
   padding: 0;
   margin: 0;
   display: grid;
-  gap: var(--space-small);
+  /* Name | Anzeigen | Drucken | ↑ | ↓ | Löschen */
+  grid-template-columns: 1fr repeat(2, 4.5rem) repeat(3, auto);
+  gap: var(--space-small) 0.15rem;
+  align-items: center;
 
   li {
-    display: flex;
+    display: grid;
+    grid-template-columns: subgrid;
+    grid-column: 1 / -1;
     align-items: center;
-    gap: 0.15rem;
 
-    input {
-      flex: 1;
+    input[type='text'] {
       margin-right: var(--space-small);
+    }
+
+    input[type='checkbox'] {
+      justify-self: center;
+      width: 1.1rem;
+      height: 1.1rem;
+      accent-color: var(--accent-color);
+      cursor: pointer;
+
+      &:disabled {
+        cursor: default;
+        opacity: 0.35;
+      }
+    }
+  }
+
+  .column-list-header {
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--muted-color);
+
+    span:not(:first-child) {
+      text-align: center;
     }
   }
 }

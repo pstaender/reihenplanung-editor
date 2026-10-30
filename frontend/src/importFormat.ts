@@ -17,6 +17,7 @@ const DATE = /^\d{4}-\d{2}-\d{2}$/
 const COLOR = /^#[0-9a-f]{6}$/i
 
 type FileCells = Record<string, string>
+type FileColumn = string | { title: string; hidden?: boolean; hiddenInPrint?: boolean }
 type FileRow = { label?: string; date?: string; bg?: string; fg?: string; cells: FileCells }
 
 export function exportFile(series: Series[]) {
@@ -34,7 +35,10 @@ export function exportFile(series: Series[]) {
         unit: s.unit,
         weekdays: s.weekdays,
         state: s.state,
-        columns: s.columns.map((c) => c.title),
+        columns: s.columns.map(
+          ({ title, hidden, hiddenInPrint }): FileColumn =>
+            hidden || hiddenInPrint ? { title, ...(hidden ? { hidden } : {}), ...(hiddenInPrint ? { hiddenInPrint } : {}) } : title,
+        ),
         rows: s.rows.map(
           (r): FileRow => ({
             ...(r.label ? { label: r.label } : {}),
@@ -76,10 +80,10 @@ function toSeries(raw: unknown): Series {
   if (typeof state !== 'string' || (state && !STATES.some((s) => s.slug === state))) throw new Error(`unbekanntes Bundesland "${state}"`)
   if (!Array.isArray(rows)) throw new Error('"rows" muss eine Liste sein')
 
-  const titles = raw.columns ?? DEFAULT_COLUMNS
-  if (!Array.isArray(titles) || !titles.every((t) => typeof t === 'string')) throw new Error('"columns" muss eine Liste von Texten sein')
-  if (new Set(titles).size !== titles.length) throw new Error('Spaltennamen in "columns" müssen eindeutig sein')
-  const columns: Column[] = titles.map(newColumn)
+  const rawColumns = raw.columns ?? DEFAULT_COLUMNS
+  if (!Array.isArray(rawColumns)) throw new Error('"columns" muss eine Liste sein')
+  const columns: Column[] = rawColumns.map(toColumn)
+  if (new Set(columns.map((c) => c.title)).size !== columns.length) throw new Error('Spaltennamen in "columns" müssen eindeutig sein')
 
   const cells = (value: unknown, where: string): Record<string, string> => {
     if (!isObject(value)) throw new Error(`${where}: "cells" muss ein Objekt sein`)
@@ -134,6 +138,17 @@ function toSeries(raw: unknown): Series {
     createdAt: now,
     updatedAt: now,
   }
+}
+
+/** Spalte als Text ("Thema") oder Objekt ({ "title": "Notizen", "hiddenInPrint": true }) */
+function toColumn(value: unknown, index: number): Column {
+  if (typeof value === 'string') return newColumn(value)
+  const where = `Spalte ${index + 1}`
+  if (!isObject(value) || typeof value.title !== 'string') throw new Error(`${where}: Text oder Objekt mit "title" erwartet`)
+  const { title, hidden, hiddenInPrint } = value
+  if (hidden !== undefined && typeof hidden !== 'boolean') throw new Error(`${where}: "hidden" muss true oder false sein`)
+  if (hiddenInPrint !== undefined && typeof hiddenInPrint !== 'boolean') throw new Error(`${where}: "hiddenInPrint" muss true oder false sein`)
+  return { ...newColumn(title), ...(hidden ? { hidden } : {}), ...(hiddenInPrint ? { hiddenInPrint } : {}) }
 }
 
 function isObject(value: unknown): value is Record<string, unknown> {

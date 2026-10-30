@@ -14,7 +14,7 @@ interface Props {
 export function ColumnsDialog({ columns, onSave, onClose }: Props) {
   const [draft, setDraft] = useState(columns)
 
-  const rename = (id: string, title: string) => setDraft((cols) => cols.map((c) => (c.id === id ? { ...c, title } : c)))
+  const change = (id: string, patch: Partial<Column>) => setDraft((cols) => cols.map((c) => (c.id === id ? { ...c, ...patch } : c)))
   const move = (index: number, delta: number) =>
     setDraft((cols) => {
       const next = [...cols]
@@ -32,9 +32,29 @@ export function ColumnsDialog({ columns, onSave, onClose }: Props) {
         }}
       >
         <ol className="column-list">
+          <li className="column-list-header" aria-hidden>
+            <span>Name</span>
+            <span>Anzeigen</span>
+            <span>Drucken</span>
+          </li>
           {draft.map((column, index) => (
             <li key={column.id}>
-              <input type="text" value={column.title} onChange={(e) => rename(column.id, e.target.value)} aria-label="Spaltenname" />
+              <input type="text" value={column.title} onChange={(e) => change(column.id, { title: e.target.value })} aria-label="Spaltenname" />
+              <input
+                type="checkbox"
+                checked={!column.hidden}
+                onChange={(e) => change(column.id, { hidden: !e.target.checked })}
+                title="In der Tabelle anzeigen"
+                aria-label={`${column.title} anzeigen`}
+              />
+              <input
+                type="checkbox"
+                checked={!column.hidden && !column.hiddenInPrint}
+                disabled={column.hidden}
+                onChange={(e) => change(column.id, { hiddenInPrint: !e.target.checked })}
+                title={column.hidden ? 'Ausgeblendete Spalten werden nicht gedruckt' : 'Beim Drucken anzeigen'}
+                aria-label={`${column.title} drucken`}
+              />
               <button type="button" className="icon-button" title="Nach links" disabled={index === 0} onClick={() => move(index, -1)}>
                 <IconArrowUp />
               </button>
@@ -57,7 +77,10 @@ export function ColumnsDialog({ columns, onSave, onClose }: Props) {
             <IconPlus /> Spalte hinzufügen
           </button>
         </div>
-        <small className="muted">Beim Löschen einer Spalte gehen deren Inhalte nach dem Speichern verloren.</small>
+        <small className="muted">
+          Ausgeblendete Spalten behalten ihre Inhalte und bleiben im Zeilen-Dialog (Stift) bearbeitbar. Beim Löschen einer Spalte gehen
+          deren Inhalte nach dem Speichern verloren.
+        </small>
         <footer className="dialog-footer">
           <button type="button" onClick={onClose}>
             Abbrechen
@@ -79,6 +102,8 @@ function uniqueTitles(columns: Column[]): Column[] {
     let title = base
     for (let n = 2; seen.has(title); n++) title = `${base} ${n}`
     seen.add(title)
-    return { ...column, title }
+    // Nur gesetzte Flags speichern
+    const { hidden, hiddenInPrint, ...rest } = column
+    return { ...rest, title, ...(hidden ? { hidden } : {}), ...(hiddenInPrint ? { hiddenInPrint } : {}) }
   })
 }

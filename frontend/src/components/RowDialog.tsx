@@ -42,7 +42,9 @@ export function RowDialog({ title, columns, row, withDate, withColors, onSave, o
 
         {columns.map((column) => (
           <label key={column.id}>
-            {column.title}
+            <span>
+              {column.title} {column.hidden && <span className="muted">(ausgeblendet)</span>}
+            </span>
             <textarea
               rows={3}
               className="autosize"

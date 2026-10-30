@@ -1,6 +1,7 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useState, type ReactNode } from 'react'
 import { formatDate, parseDate } from '../dates'
 import { STATES, useHolidays } from '../holidays'
+import { toggleMeta, useViewSettings, type MetaItem } from '../localSettings'
 import { href } from '../router'
 import { buildSchedule, estimateEndYear, nextLessonDate, type DisplayRow } from '../schedule'
 import { newRow, updateSeries, useStore } from '../store'
@@ -106,6 +107,8 @@ export function SeriesView({ id }: { id: string }) {
     setDialog(null)
   }
 
+  const visibleColumns = series.columns.filter((c) => !c.hidden)
+  const hiddenCount = series.columns.length - visibleColumns.length
   const editingRow = editing?.kind === 'row' ? series.rows.find((r) => r.id === editing.id) : undefined
   const stateName = STATES.find((s) => s.slug === series.state)?.name
 
@@ -118,8 +121,12 @@ export function SeriesView({ id }: { id: string }) {
           </a>
           <h1>{series.name || 'Ohne Titel'}</h1>
           <p className="meta">
-            <strong>{series.course}</strong> · {UNIT_LABELS[series.unit]} · Start {describeStart(series)}
-            {stateName && ` · Ferien: ${stateName}`}
+            <MetaToggle item="course">
+              <strong>{series.course}</strong>
+            </MetaToggle>
+            <MetaToggle item="unit">{UNIT_LABELS[series.unit]}</MetaToggle>
+            <MetaToggle item="start">Start {describeStart(series)}</MetaToggle>
+            {stateName && <MetaToggle item="holidays">Ferien: {stateName}</MetaToggle>}
           </p>
         </div>
         <div className="toolbar dont-print">
@@ -128,6 +135,7 @@ export function SeriesView({ id }: { id: string }) {
           </button>
           <button onClick={() => setDialog('columns')} title="Spalten bearbeiten">
             <IconColumns /> Spalten
+            {hiddenCount > 0 && <span className="muted">({hiddenCount} ausgeblendet)</span>}
           </button>
           <button onClick={() => window.print()} title="Drucken (Querformat)">
             <IconPrint /> Drucken
@@ -141,16 +149,18 @@ export function SeriesView({ id }: { id: string }) {
         <table className="plan">
           <colgroup>
             <col className="col-slot" />
-            {series.columns.map((c) => (
-              <col key={c.id} />
+            {visibleColumns.map((c) => (
+              <col key={c.id} className={c.hiddenInPrint ? 'dont-print' : undefined} />
             ))}
             <col className="col-actions dont-print" />
           </colgroup>
           <thead>
             <tr>
               <th>{FIRST_COLUMN[series.unit]}</th>
-              {series.columns.map((c) => (
-                <th key={c.id}>{c.title}</th>
+              {visibleColumns.map((c) => (
+                <th key={c.id} className={c.hiddenInPrint ? 'dont-print' : undefined}>
+                  {c.title}
+                </th>
               ))}
               <th className="dont-print" aria-label="Aktionen" />
             </tr>
@@ -161,6 +171,7 @@ export function SeriesView({ id }: { id: string }) {
                 key={entry.kind === 'content' ? entry.row.id : `h-${entry.slot.key}`}
                 entry={entry}
                 series={series}
+                columns={visibleColumns}
                 rowCount={series.rows.length}
                 updateRow={updateRow}
                 updateHoliday={updateHoliday}
@@ -221,9 +232,26 @@ export function SeriesView({ id }: { id: string }) {
   )
 }
 
+/** Angabe unter dem Titel; per Klick ausblendbar (Bildschirm: blass, Druck: unsichtbar). */
+function MetaToggle({ item, children }: { item: MetaItem; children: ReactNode }) {
+  const hidden = useViewSettings().hiddenMeta.includes(item)
+  return (
+    <button
+      type="button"
+      className={`meta-item ${hidden ? 'is-hidden' : ''}`}
+      aria-pressed={!hidden}
+      title={hidden ? 'Einblenden (wird gedruckt)' : 'Ausblenden (wird nicht gedruckt)'}
+      onClick={() => toggleMeta(item)}
+    >
+      {children}
+    </button>
+  )
+}
+
 interface RowProps {
   entry: DisplayRow
   series: Series
+  columns: Column[]
   rowCount: number
   updateRow: (id: string, change: (r: Row) => Row) => void
   updateHoliday: (key: string, change: (h: HolidayEntry) => HolidayEntry) => void
@@ -233,7 +261,7 @@ interface RowProps {
   onDelete: () => void
 }
 
-function PlanRow({ entry, series, rowCount, updateRow, updateHoliday, onEdit, onMove, onDuplicate, onDelete }: RowProps) {
+function PlanRow({ entry, series, columns, rowCount, updateRow, updateHoliday, onEdit, onMove, onDuplicate, onDelete }: RowProps) {
   const { slot, holidayNames } = entry
   const isHoliday = entry.kind === 'holiday' || (series.unit === 'lesson' && holidayNames.length > 0)
   const data: { label: string; cells: Record<string, string> } =
@@ -268,8 +296,8 @@ function PlanRow({ entry, series, rowCount, updateRow, updateHoliday, onEdit, on
         {holidayNames.length > 0 && <span className="slot-holiday">{holidayNames.join(', ')}</span>}
         <InlineText value={data.label} onChange={setLabel} placeholder="…" />
       </th>
-      {series.columns.map((column) => (
-        <td key={column.id}>
+      {columns.map((column) => (
+        <td key={column.id} className={column.hiddenInPrint ? 'dont-print' : undefined}>
           <EditableCell value={data.cells[column.id] ?? ''} onChange={(v) => setCell(column.id, v)} placeholder={column.title} />
         </td>
       ))}

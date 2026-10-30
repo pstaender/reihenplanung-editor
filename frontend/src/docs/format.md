@@ -30,12 +30,28 @@ Die Datei lässt sich von Hand, mit einem Skript oder mit einer KI erstellen. F�
 | `unit` | `"week"`, `"day"` oder `"lesson"` | ja | Wonach die Reihe gegliedert ist: Kalenderwochen, Unterrichtstage oder einzelne Unterrichtsstunden |
 | `weekdays` | Liste von Zahlen | nein | Wochentage mit Unterricht: `1` = Montag, `2` = Dienstag … `6` = Samstag. Leer oder weggelassen bedeutet Montag bis Freitag. |
 | `state` | Text | nein | Bundesland, dessen Ferien und Feiertage angezeigt werden (Kürzel siehe unten). `""` oder weggelassen bedeutet: keine Ferienanzeige. |
-| `columns` | Liste von Texten | nein | Namen der Inhaltsspalten, jeder Name nur einmal. Weggelassen bedeutet: `["Thema", "Lernziele", "Kompetenzerweiterungen", "Notizen"]`. |
+| `columns` | Liste | nein | Die Inhaltsspalten, jeder Name nur einmal. Eine Spalte ist entweder nur ihr Name (`"Thema"`) oder ein Objekt, siehe „Spalten ausblenden“. Weggelassen bedeutet: `["Thema", "Lernziele", "Kompetenzerweiterungen", "Notizen"]`. |
 | `rows` | Liste | ja | Die Unterrichtseinheiten in zeitlicher Reihenfolge, siehe unten |
 | `id` | UUID | nein | Nur nötig, um eine vorhandene Reihe zu überschreiben. Ohne `id` wird eine neue Reihe angelegt. |
 | `holidays` | Objekt | nein | Notizen in grauen Ferienzeilen. Schlüssel ist das Datum (bei `"week"` der Montag der Woche), Wert ein Objekt mit `label` und `cells` wie bei einer Zeile. Wird beim Export geschrieben und für neue Planungen nicht gebraucht. |
 
 Die erste Spalte der Tabelle (KW, Tag oder Stunde) erzeugt die App selbst. Sie gehört nicht in `columns`.
+
+## Spalten ausblenden
+
+Soll eine Spalte nicht in der Tabelle oder nicht im Ausdruck erscheinen, wird sie als Objekt statt als Name angegeben:
+
+```json
+{ "columns": ["Thema", "Lernziele", { "title": "Notizen", "hiddenInPrint": true }] }
+```
+
+| Feld | Typ | Pflicht | Bedeutung |
+| --- | --- | --- | --- |
+| `title` | Text | ja | Name der Spalte |
+| `hidden` | `true` / `false` | nein | `true`: Spalte wird in der Tabelle ausgeblendet und nicht gedruckt. Die Inhalte bleiben erhalten. |
+| `hiddenInPrint` | `true` / `false` | nein | `true`: Spalte wird angezeigt, aber nicht gedruckt |
+
+Auch für ausgeblendete Spalten werden die Inhalte in `cells` über den Namen (`title`) angegeben.
 
 ## Eine Zeile (Unterrichtseinheit)
 
@@ -94,7 +110,7 @@ Erlaubt ist einfaches Markdown. Ein Zeilenumbruch im Text wird als `\n` geschrie
 2. Ganz oben stehen `"app": "pstaender/reihenplanung"` und `"version": 1`.
 3. Jede Reihe hat `name`, `startDate`, `unit` und `rows`.
 4. Alle Daten haben das Format `JJJJ-MM-TT`, z. B. `2026-09-28`.
-5. Die Schlüssel in `cells` entsprechen genau den Namen in `columns`.
+5. Die Schlüssel in `cells` entsprechen genau den Spaltennamen aus `columns`.
 6. Die Zeilen stehen in zeitlicher Reihenfolge, Ferien bekommen keine eigenen Zeilen.
 
 ## Beispiel
