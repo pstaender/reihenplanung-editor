@@ -28,12 +28,6 @@ export function SeriesView({ id }: { id: string }) {
   const { holidays, error: holidayError } = useHolidays(series?.state ?? '', startYear, series ? estimateEndYear(series) : 0)
   const schedule = useMemo(() => (series ? buildSchedule(series, holidays) : []), [series, holidays])
 
-  // Querformat beim Drucken (siehe minimax-din-a4.css: body.landscape)
-  useEffect(() => {
-    document.body.classList.add('landscape')
-    return () => document.body.classList.remove('landscape')
-  }, [])
-
   useEffect(() => {
     if (series) document.title = `${series.name} – Reihenplanung`
     return () => void (document.title = 'Reihenplanung')

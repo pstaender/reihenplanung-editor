@@ -74,7 +74,7 @@ Umgebungsvariablen der API: `REIHENPLANUNG_DATA_DIR` (Standard `api/data`), `REI
 
 - Die Software ist noch nicht produktiv: keine Rückwärtskompatibilitäts-Workarounds für alte Datenstände bauen.
 - Keine zusätzlichen UI-Frameworks; Stil nüchtern, wenig Farbe, Icons nur aus `keyline-icons`.
-- Druck: Tabelle im Querformat (`body.landscape` + `@page landscape-page`); UI-Elemente mit `dont-print` ausblenden.
+- Druck: grundsätzlich Querformat (globales `@page` in `styles.css`); UI-Elemente mit `dont-print` ausblenden.
 - Datumswerte immer als `YYYY-MM-DD`-Strings (Helfer in `src/dates.ts`), keine UTC-Konvertierung.
 - PHP: `declare(strict_types=1)`, `final`/`readonly` Klassen, IDs vor Dateizugriff als UUID validieren.
   Reihen-JSON als Objekte dekodieren (`json_decode(..., false)`), sonst werden leere Objekte `{}` zu `[]`.
