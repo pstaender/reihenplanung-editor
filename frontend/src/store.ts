@@ -57,11 +57,14 @@ export const DEFAULT_COLUMNS = ['Thema', 'Lernziele', 'Kompetenzerweiterungen', 
 export const newRow = (partial: Partial<Row> = {}): Row => ({ id: uuid(), label: '', cells: {}, ...partial })
 export const newColumn = (title: string): Column => ({ id: uuid(), title })
 
-export function createSeries(data: Pick<Series, 'name' | 'course' | 'startDate' | 'unit' | 'weekdays' | 'state'>): Series {
+export type SeriesSettings = Pick<Series, 'name' | 'course' | 'bg' | 'startDate' | 'unit' | 'weekdays' | 'state'>
+
+export function createSeries(data: SeriesSettings): Series {
   const now = Date.now()
   const series: StoredSeries = {
     id: uuid(),
     ...data,
+    sort: topSort(false),
     columns: DEFAULT_COLUMNS.map(newColumn),
     rows: [newRow(data.unit === 'lesson' ? { date: data.startDate } : {})],
     holidays: {},
@@ -118,6 +121,53 @@ export function deleteSeries(id: string) {
   })
 }
 
+// ── Sortierung in der Übersicht ───────────────────────────────────────────────
+
+/** Angeheftete zuerst, dann nach `sort`; ohne `sort` ans Ende (neueste zuerst). */
+export function compareSeries(a: Series, b: Series) {
+  return (
+    Number(Boolean(b.pinned)) - Number(Boolean(a.pinned)) ||
+    (a.sort ?? Infinity) - (b.sort ?? Infinity) ||
+    b.startDate.localeCompare(a.startDate) ||
+    a.name.localeCompare(b.name)
+  )
+}
+
+/** Sichtbare Reihen in der Reihenfolge der Übersicht. */
+export const sortedSeries = (map: Map<string, Series>) => [...map.values()].filter((s) => !s.deleted).sort(compareSeries)
+
+function group(pinned: boolean) {
+  return sortedSeries(state.series).filter((s) => Boolean(s.pinned) === pinned)
+}
+
+/** `sort`-Wert für den Anfang bzw. das Ende einer Gruppe. */
+function topSort(pinned: boolean) {
+  return Math.min(0, ...group(pinned).flatMap((s) => (s.sort === undefined ? [] : [s.sort]))) - 1
+}
+function bottomSort(pinned: boolean) {
+  return Math.max(0, ...group(pinned).flatMap((s) => (s.sort === undefined ? [] : [s.sort]))) + 1
+}
+
+/** Setzt eine Reihe vor bzw. hinter eine andere derselben Gruppe (angeheftet / übrige), z. B. per Drag & Drop. */
+export function placeSeries(id: string, targetId: string, after: boolean) {
+  const current = state.series.get(id)
+  const target = state.series.get(targetId)
+  if (!current || !target || id === targetId || Boolean(current.pinned) !== Boolean(target.pinned)) return
+  const list = group(Boolean(current.pinned)).filter((s) => s.id !== id)
+  list.splice(list.findIndex((s) => s.id === targetId) + (after ? 1 : 0), 0, current)
+  // Gruppe durchnummerieren; gespeichert werden nur tatsächlich geänderte Reihen
+  list.forEach((s, i) => s.sort !== i && updateSeries(s.id, (x) => ({ ...x, sort: i })))
+}
+
+/** Anheften (ans Ende der angehefteten) bzw. lösen (an den Anfang der übrigen). */
+export function togglePinned(id: string) {
+  const current = state.series.get(id)
+  if (!current) return
+  const pinned = !current.pinned
+  const sort = pinned ? bottomSort(true) : topSort(false)
+  updateSeries(id, (s) => ({ ...s, pinned, sort }))
+}
+
 function persist(series: StoredSeries) {
   const map = new Map(state.series)
   map.set(series.id, series)
@@ -144,9 +194,11 @@ export function applyRemote(remote: Series[]) {
   setState({ series: map })
 }
 
-/** Übernimmt bereits geprüfte Reihen (siehe `parseImport`); gleiche IDs werden überschrieben. */
+/** Übernimmt bereits geprüfte Reihen (siehe `parseImport`); gleiche IDs werden überschrieben.
+ *  Die Reihen landen in Dateireihenfolge oben in ihrer Gruppe. */
 export function importSeries(list: Series[]) {
-  for (const series of list) persist({ ...series, updatedAt: Date.now(), _dirty: true })
+  const start = { true: topSort(true), false: topSort(false) }
+  list.forEach((series, i) => persist({ ...series, sort: start[`${Boolean(series.pinned)}`] - list.length + i, updatedAt: Date.now(), _dirty: true }))
 }
 
 /** Alle Reihen beim nächsten Sync (erneut) hochladen, ohne ihren Änderungszeitpunkt zu verändern. */
@@ -164,11 +216,11 @@ export function saveSettings(patch: Partial<SyncSettings>) {
 
 export const setSyncStatus = (sync: SyncStatus) => setState({ sync })
 
-export const newSeriesDefaults = () => ({
+export const newSeriesDefaults = (): SeriesSettings => ({
   name: '',
   course: '',
   startDate: today(),
-  unit: 'week' as const,
+  unit: 'week',
   weekdays: [] as number[],
   state: '',
 })

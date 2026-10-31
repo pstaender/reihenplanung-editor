@@ -12,10 +12,20 @@ function parse(hash: string): Route {
   return { page: 'list' }
 }
 
+/** Sync und Hilfe sind „Nebenseiten“: Esc bzw. „Zurück“ führt dorthin, von wo sie geöffnet wurden. */
+const isSidePage = (route: Route) => route.page === 'sync' || route.page === 'help'
+let returnTo = '#/'
+export const getReturnTo = () => returnTo
+
 export function useRoute(): Route {
   const [route, setRoute] = useState(() => parse(location.hash))
   useEffect(() => {
-    const update = () => setRoute(parse(location.hash))
+    const update = (e: HashChangeEvent) => {
+      const previous = new URL(e.oldURL).hash || '#/'
+      const next = parse(location.hash)
+      if (isSidePage(next) && !isSidePage(parse(previous))) returnTo = previous
+      setRoute(next)
+    }
     window.addEventListener('hashchange', update)
     return () => window.removeEventListener('hashchange', update)
   }, [])

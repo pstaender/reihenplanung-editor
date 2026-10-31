@@ -2,7 +2,7 @@ import { useState } from 'react'
 import guide from '../docs/anleitung.md?raw'
 import format from '../docs/format.md?raw'
 import { renderMarkdown } from '../markdown'
-import { href, type HelpTopic } from '../router'
+import { getReturnTo, href, type HelpTopic } from '../router'
 import { IconBack, IconCheck, IconClipboard, IconDownload, IconSparkles } from '../icons'
 import { downloadJson } from './BackupButtons'
 
@@ -33,8 +33,8 @@ export function HelpPage({ topic }: { topic: HelpTopic }) {
     <section className="help-page">
       <header className="page-header">
         <div>
-          <a href={href.list()} className="back">
-            <IconBack /> Alle Reihen
+          <a href={getReturnTo()} className="back" title="Zurück (Esc)">
+            <IconBack /> Zurück
           </a>
           <h1>Hilfe</h1>
         </div>

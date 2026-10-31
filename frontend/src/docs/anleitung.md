@@ -27,6 +27,6 @@ In Zellen ist einfaches Markdown möglich: `**fett**`, `*kursiv*`, Listen mit `-
 
 ## Sichern und Synchronisieren
 
-Alle Daten liegen nur in diesem Browser. Über **Exportieren** in der Übersicht erhältst du eine JSON-Sicherung, die du mit **Importieren** wiederherstellen kannst. Das Format ist unter *Formatspezifikation* beschrieben, damit lassen sich Planungen auch von einer KI erstellen.
+Alle Daten liegen nur in diesem Browser. Über **Exportieren** in der Übersicht erhältst du eine ZIP-Sicherung aller Reihen (eine JSON-Datei pro Reihe), über das Export-Symbol an einer Reihe nur diese eine als JSON-Datei. Beides lässt sich mit **Importieren** wiederherstellen. Das Format ist unter *Formatspezifikation* beschrieben, damit lassen sich Planungen auch von einer KI erstellen.
 
 Optional gleicht die Seite *Synchronisation* (Wolken-Symbol oben rechts) die Daten mit einem eigenen Server ab.

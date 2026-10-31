@@ -1,12 +1,14 @@
 import { useState, type FormEvent } from 'react'
-import { isoWeek, WEEKDAYS } from '../dates'
-import { STATES } from '../holidays'
-import { newSeriesDefaults } from '../store'
+import { isoWeek, parseDate, WEEKDAYS } from '../dates'
+import { STATES, useHolidays } from '../holidays'
+import { buildSchedule, estimateEndYear } from '../schedule'
+import { newSeriesDefaults, updateSeries, type SeriesSettings } from '../store'
 import type { Series, Unit } from '../types'
+import { BACKGROUND_PRESETS, ColorField } from './ColorField'
 import { Dialog } from './Dialog'
 import { UNIT_LABELS } from './SeriesList'
 
-type FormData = Pick<Series, 'name' | 'course' | 'startDate' | 'unit' | 'weekdays' | 'state'>
+type FormData = SeriesSettings
 
 interface Props {
   initial?: FormData
@@ -18,8 +20,7 @@ export function SeriesForm({ initial, onSave, onClose }: Props) {
   const [data, setData] = useState<FormData>(initial ?? newSeriesDefaults())
   const set = <K extends keyof FormData>(key: K, value: FormData[K]) => setData((d) => ({ ...d, [key]: value }))
 
-  const toggleWeekday = (day: number) =>
-    set('weekdays', data.weekdays.includes(day) ? data.weekdays.filter((d) => d !== day) : [...data.weekdays, day].sort())
+  const toggleWeekday = (day: number) => set('weekdays', data.weekdays.includes(day) ? data.weekdays.filter((d) => d !== day) : [...data.weekdays, day].sort())
 
   const submit = (e: FormEvent) => {
     e.preventDefault()
@@ -33,10 +34,13 @@ export function SeriesForm({ initial, onSave, onClose }: Props) {
           Name
           <input type="text" required autoFocus value={data.name} onChange={(e) => set('name', e.target.value)} placeholder="z. B. Bruchrechnung" />
         </label>
-        <label>
-          Kurs
-          <input type="text" required value={data.course} onChange={(e) => set('course', e.target.value)} placeholder="z. B. 6b Mathematik" />
-        </label>
+        <div className="grid-2">
+          <label>
+            Kurs
+            <input type="text" required value={data.course} onChange={(e) => set('course', e.target.value)} placeholder="z. B. 6b Mathematik" />
+          </label>
+          <ColorField label="Hintergrundfarbe" value={data.bg} presets={BACKGROUND_PRESETS} fallback="#ffffff" onChange={(bg) => set('bg', bg)} />
+        </div>
         <div className="grid-2">
           <label>
             Einheit
@@ -93,4 +97,25 @@ export function SeriesForm({ initial, onSave, onClose }: Props) {
       </form>
     </Dialog>
   )
+}
+
+/** „Reihe bearbeiten“ für eine bestehende Reihe – aus der Übersicht wie aus der Planungstabelle. */
+export function SeriesSettingsDialog({ series, onClose }: { series: Series; onClose: () => void }) {
+  const { holidays } = useHolidays(series.state, parseDate(series.startDate).getFullYear(), estimateEndYear(series))
+
+  const save = (data: FormData) => {
+    updateSeries(series.id, (s) => {
+      let rows = s.rows
+      // Beim Wechsel auf „Stunden“ übernehmen die Zeilen ihr bisheriges Kalenderdatum
+      if (data.unit === 'lesson' && s.unit !== 'lesson') {
+        const dates = new Map(buildSchedule(s, holidays).flatMap((d) => (d.kind === 'content' ? [[d.row.id, d.slot.key] as const] : [])))
+        rows = rows.map((r) => ({ ...r, date: r.date ?? dates.get(r.id) }))
+      }
+      return { ...s, ...data, rows }
+    })
+    onClose()
+  }
+
+  const { name, course, bg, startDate, unit, weekdays, state } = series
+  return <SeriesForm initial={{ name, course, bg, startDate, unit, weekdays, state }} onSave={save} onClose={onClose} />
 }

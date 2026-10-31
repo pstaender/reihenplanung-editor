@@ -31,6 +31,8 @@ export function exportFile(series: Series[]) {
         id: s.id,
         name: s.name,
         course: s.course,
+        ...(s.bg ? { bg: s.bg } : {}),
+        ...(s.pinned ? { pinned: true } : {}),
         startDate: s.startDate,
         unit: s.unit,
         weekdays: s.weekdays,
@@ -123,11 +125,16 @@ function toSeries(raw: unknown): Series {
     throw new Error('"weekdays" muss eine Liste von Zahlen zwischen 1 und 7 sein')
   }
 
+  if (raw.bg !== undefined && (typeof raw.bg !== 'string' || !COLOR.test(raw.bg))) throw new Error('"bg" muss eine Farbe wie #eaf2fb sein')
+  if (raw.pinned !== undefined && typeof raw.pinned !== 'boolean') throw new Error('"pinned" muss true oder false sein')
+
   const now = Date.now()
   return {
     id: typeof raw.id === 'string' && raw.id ? raw.id : uuid(),
     name: name.trim(),
     course: typeof raw.course === 'string' ? raw.course : '',
+    ...(raw.bg ? { bg: raw.bg as string } : {}),
+    ...(raw.pinned ? { pinned: true } : {}),
     startDate,
     unit: unit as Unit,
     weekdays,

@@ -1,6 +1,6 @@
 # Importformat für Unterrichtsreihen
 
-Eine Importdatei ist eine JSON-Datei mit einer oder mehreren Unterrichtsreihen. Sie wird in der Übersicht über **Importieren** geladen. Der **Export** der App erzeugt dasselbe Format, deshalb kann jede exportierte Datei wieder importiert werden.
+Eine Importdatei ist eine JSON-Datei mit einer oder mehreren Unterrichtsreihen. Sie wird in der Übersicht über **Importieren** geladen. Der **Export** der App erzeugt dasselbe Format, deshalb kann jede exportierte Datei wieder importiert werden. Beim Export aller Reihen entsteht eine ZIP-Datei mit einer solchen JSON-Datei pro Reihe; auch sie kann direkt importiert werden.
 
 Die Datei lässt sich von Hand, mit einem Skript oder mit einer KI erstellen. Für eine KI gilt: Die Antwort muss **ausschließlich gültiges JSON** sein, also ohne Erklärtext, ohne Kommentare und ohne Markdown-Codeblock drumherum.
 
@@ -18,7 +18,7 @@ Die Datei lässt sich von Hand, mit einem Skript oder mit einer KI erstellen. F�
 | --- | --- | --- | --- |
 | `app` | Text | ja | Immer `"pstaender/reihenplanung"`. Kennzeichnet die Datei als Reihenplanung. |
 | `version` | Zahl | ja | Version des Formats, derzeit immer `1` |
-| `series` | Liste | ja | Die Unterrichtsreihen, siehe unten |
+| `series` | Liste | ja | Die Unterrichtsreihen, siehe unten. Importierte Reihen erscheinen in dieser Reihenfolge oben in der Übersicht. |
 
 ## Eine Reihe
 
@@ -26,6 +26,8 @@ Die Datei lässt sich von Hand, mit einem Skript oder mit einer KI erstellen. F�
 | --- | --- | --- | --- |
 | `name` | Text | ja | Name der Reihe, z. B. `"Bruchrechnung"` |
 | `course` | Text | nein | Kurs bzw. Klasse, z. B. `"6b Mathematik"` |
+| `bg` | Farbe `#RRGGBB` | nein | Hintergrundfarbe der Reihe in der Übersicht, am besten ein heller Ton wie `#eaf2fb` |
+| `pinned` | `true` / `false` | nein | `true`: Reihe wird in der Übersicht oben angeheftet |
 | `startDate` | Datum `JJJJ-MM-TT` | ja | Erster Unterrichtstag. Bei `unit: "week"` zählt die Kalenderwoche dieses Datums. |
 | `unit` | `"week"`, `"day"` oder `"lesson"` | ja | Wonach die Reihe gegliedert ist: Kalenderwochen, Unterrichtstage oder einzelne Unterrichtsstunden |
 | `weekdays` | Liste von Zahlen | nein | Wochentage mit Unterricht: `1` = Montag, `2` = Dienstag … `6` = Samstag. Leer oder weggelassen bedeutet Montag bis Freitag. |

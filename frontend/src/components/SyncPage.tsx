@@ -1,16 +1,22 @@
 import { useState, type FormEvent } from 'react'
 import { markAllDirty, saveSettings, useStore } from '../store'
 import { syncNow, testConnection } from '../sync'
-import { href } from '../router'
+import { getReturnTo } from '../router'
 import { IconBack, IconSync } from '../icons'
 import { BackupButtons } from './BackupButtons'
+
+/** Vorschlag: der Server, von dem die App geladen wurde (Produktions-Build liegt in api/public) */
+function suggestedServerUrl() {
+  if (!location.protocol.startsWith('http')) return ''
+  return (location.origin + location.pathname).replace(/\/(index\.html)?$/, '')
+}
 
 const dateTime = new Intl.DateTimeFormat('de-DE', { dateStyle: 'medium', timeStyle: 'short' })
 
 export function SyncPage() {
   const settings = useStore((s) => s.settings)
   const sync = useStore((s) => s.sync)
-  const [serverUrl, setServerUrl] = useState(settings.serverUrl)
+  const [serverUrl, setServerUrl] = useState(settings.serverUrl || suggestedServerUrl())
   const [token, setToken] = useState(settings.token)
   const [message, setMessage] = useState<{ ok: boolean; text: string } | null>(null)
 
@@ -39,8 +45,8 @@ export function SyncPage() {
     <section className="sync-page">
       <header className="page-header">
         <div>
-          <a href={href.list()} className="back">
-            <IconBack /> Alle Reihen
+          <a href={getReturnTo()} className="back" title="Zurück (Esc)">
+            <IconBack /> Zurück
           </a>
           <h1>Synchronisation</h1>
         </div>
@@ -78,7 +84,7 @@ export function SyncPage() {
       {settings.lastSyncAt && <p className="muted">Zuletzt synchronisiert: {dateTime.format(settings.lastSyncAt)}</p>}
 
       <h2>Datensicherung</h2>
-      <p className="muted">Alle Reihen als JSON-Datei exportieren bzw. wieder importieren.</p>
+      <p className="muted">Alle Reihen als ZIP-Datei (eine JSON-Datei pro Reihe) exportieren bzw. JSON- oder ZIP-Dateien wieder importieren.</p>
       <div className="toolbar">
         <BackupButtons />
       </div>

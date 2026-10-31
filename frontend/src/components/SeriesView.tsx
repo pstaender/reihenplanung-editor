@@ -11,7 +11,7 @@ import { IconArrowDown, IconArrowUp, IconBack, IconColumns, IconCopy, IconDelete
 import { ColumnsDialog } from './ColumnsDialog'
 import { EditableCell, InlineText } from './EditableCell'
 import { RowDialog } from './RowDialog'
-import { SeriesForm } from './SeriesForm'
+import { SeriesSettingsDialog } from './SeriesForm'
 import { describeStart, UNIT_LABELS } from './SeriesList'
 
 type Editing = { kind: 'row'; id: string } | { kind: 'holiday'; key: string; title: string } | null
@@ -76,19 +76,6 @@ export function SeriesView({ id }: { id: string }) {
     update((s) => ({ ...s, rows: s.rows.filter((_, i) => i !== index) }))
   }
 
-  const saveSettings = (data: Pick<Series, 'name' | 'course' | 'startDate' | 'unit' | 'weekdays' | 'state'>) => {
-    update((s) => {
-      let rows = s.rows
-      // Beim Wechsel auf „Stunden“ übernehmen die Zeilen ihr bisheriges Kalenderdatum
-      if (data.unit === 'lesson' && s.unit !== 'lesson') {
-        const dates = new Map(schedule.flatMap((d) => (d.kind === 'content' ? [[d.row.id, d.slot.key] as const] : [])))
-        rows = rows.map((r) => ({ ...r, date: r.date ?? dates.get(r.id) }))
-      }
-      return { ...s, ...data, rows }
-    })
-    setDialog(null)
-  }
-
   const saveColumns = (columns: Column[]) => {
     const ids = new Set(columns.map((c) => c.id))
     const prune = (cells: Record<string, string>) => Object.fromEntries(Object.entries(cells).filter(([k]) => ids.has(k)))
@@ -116,7 +103,9 @@ export function SeriesView({ id }: { id: string }) {
           <h1>{series.name || 'Ohne Titel'}</h1>
           <p className="meta">
             <MetaToggle item="course">
-              <strong>{series.course}</strong>
+              <strong className={series.bg ? 'course-badge' : undefined} style={{ backgroundColor: series.bg }}>
+                {series.course}
+              </strong>
             </MetaToggle>
             <MetaToggle item="unit">{UNIT_LABELS[series.unit]}</MetaToggle>
             <MetaToggle item="start">Start {describeStart(series)}</MetaToggle>
@@ -192,7 +181,7 @@ export function SeriesView({ id }: { id: string }) {
         <small className="muted">Zellen anklicken zum Bearbeiten · Markdown möglich · Strg/⌘+Enter speichert, Esc verwirft</small>
       </footer>
 
-      {dialog === 'settings' && <SeriesForm initial={series} onSave={saveSettings} onClose={() => setDialog(null)} />}
+      {dialog === 'settings' && <SeriesSettingsDialog series={series} onClose={() => setDialog(null)} />}
       {dialog === 'columns' && <ColumnsDialog columns={series.columns} onSave={saveColumns} onClose={() => setDialog(null)} />}
       {editingRow && (
         <RowDialog

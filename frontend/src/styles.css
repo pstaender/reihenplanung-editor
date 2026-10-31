@@ -152,6 +152,13 @@ button.primary,
     margin: 0.25rem 0 0;
   }
 
+  .course-badge {
+    color-scheme: light;
+    color: #111;
+    padding: 0.05em 0.4em;
+    border-radius: 3px;
+  }
+
   .meta-item {
     all: unset;
     cursor: pointer;
@@ -263,11 +270,43 @@ button.primary,
     }
   }
 
+  /* Helle Hintergrundfarbe der Reihe → auch im Dark Mode dunkle Schrift */
+  li.colored {
+    color-scheme: light;
+    color: #111;
+  }
+
+  li[draggable] {
+    cursor: grab;
+  }
+
+  li.dragging {
+    opacity: 0.4;
+  }
+
+  li.drop-before {
+    box-shadow: 0 -3px 0 var(--accent-color);
+  }
+
+  li.drop-after {
+    box-shadow: 0 3px 0 var(--accent-color);
+  }
+
+  li.pinned + li:not(.pinned) {
+    margin-top: var(--space);
+  }
+
   .card-actions {
     display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-end;
     gap: 0.15rem;
     padding-right: var(--space-small);
     color: var(--muted-color);
+
+    .active {
+      color: var(--text-color, currentColor);
+    }
   }
 }
 
@@ -289,6 +328,7 @@ button.primary,
     gap: 0.3rem;
     font-weight: 500;
     font-size: 0.9rem;
+    align-content: baseline;
   }
 
   input,

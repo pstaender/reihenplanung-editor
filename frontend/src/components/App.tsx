@@ -1,5 +1,6 @@
-import { href, useRoute } from '../router'
-import { IconBook, IconHelp } from '../icons'
+import { useEffect } from 'react'
+import { getReturnTo, href, navigate, useRoute } from '../router'
+import { IconHelp } from '../icons'
 import { HelpPage } from './HelpPage'
 import { SeriesList } from './SeriesList'
 import { SeriesView } from './SeriesView'
@@ -8,12 +9,24 @@ import { SyncPage } from './SyncPage'
 
 export function App() {
   const route = useRoute()
+  const sidePage = route.page === 'sync' || route.page === 'help'
+
+  // Esc auf Sync-/Hilfeseite: zurück zur Seite, von der aus sie geöffnet wurde
+  useEffect(() => {
+    if (!sidePage) return
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key !== 'Escape' || e.defaultPrevented || document.querySelector('dialog[open]')) return
+      navigate(getReturnTo())
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [sidePage])
 
   return (
     <>
       <header className="app-header dont-print">
         <a href={href.list()} className="brand">
-          <IconBook /> Reihenplanung
+          Reihenplanung
         </a>
         <nav>
           <a href={href.help()} className={route.page === 'help' ? 'active' : undefined}>

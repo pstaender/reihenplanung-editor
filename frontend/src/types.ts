@@ -31,6 +31,12 @@ export interface Series {
   id: string
   name: string
   course: string
+  /** Hintergrundfarbe der Reihe (Karte in der Übersicht, Kurs in der Kopfzeile) */
+  bg?: string
+  /** In der Übersicht oben angeheftet */
+  pinned?: boolean
+  /** Position in der Übersicht (aufsteigend, innerhalb angehefteter bzw. übriger Reihen) */
+  sort?: number
   /** YYYY-MM-DD; bei Einheit KW zählt die Woche dieses Datums. */
   startDate: string
   unit: Unit
