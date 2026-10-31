@@ -168,6 +168,7 @@ button.primary,
     &:hover {
       text-decoration: underline;
       text-decoration-color: color-mix(in srgb, currentColor 40%, transparent);
+      outline: none;
     }
 
     &:focus-visible {
