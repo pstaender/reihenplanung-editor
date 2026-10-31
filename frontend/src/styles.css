@@ -711,10 +711,13 @@ table.plan {
 /* ── Druck ─────────────────────────────────────────────────────────────────── */
 
 /* Grundsätzlich Querformat (überschreibt das Hochformat aus minimax-din-a4.css) */
-@page,
-@page:first {
+@page {
   size: A4 landscape;
   margin: 1.2cm 1cm;
+}
+
+@page :first {
+  margin-top: 1.2cm;
 }
 
 @media print {
